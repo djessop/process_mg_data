@@ -1,0 +1,6 @@
+databases/
+figures/
+shapefiles/
+Data/
+Code/Soufriere-MG-network.py*
+Code/plot_mg_data.py*
