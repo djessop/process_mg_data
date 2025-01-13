@@ -1,5 +1,6 @@
 *~
 process.cfg*
 code/*~
+code/__pycache__
 Data/
 
