@@ -65,43 +65,48 @@ rename_dict = {'CO2base.1': 'CO2base',
                'H2Obase.2': 'H2Obase',
                'H2Obase.3': 'H2Obase'}
 
+def col_filter(df, pattern, is_regex=True):
+    return df.columns[df.columns.str.contains(pattern, regex=is_regex)]
+
 def remove_bad_data(df):
     '''
     Returns a dataframe where data below certain thresholds has been removed.
     '''
-    for ind, row in df.iterrows():
-        # Columns containing R2 correlation coefficients below .6:
-        for col in df.columns[df.columns.str.contains('R2')]:
-            rows_to_change = df[col] < .6
-            df.loc[rows_to_change, col]           = np.nan
-            df.loc[rows_to_change, 'CO2/H2S(L2)'] = np.nan
-            df.loc[rows_to_change, 'err_ratio']   = np.nan
+    df_c = df.copy()
+    # for ind, row in df.iterrows():
+    # Columns containing R2 correlation coefficients below .6
+    for col in col_filter(df_c, 'R2'):
+        rows_to_change = df_c[col] < .6
+        df_c.loc[rows_to_change, col]           = np.nan
+        df_c.loc[rows_to_change, 'CO2/H2S(L2)'] = np.nan
+        df_c.loc[rows_to_change, 'err_ratio']   = np.nan
 
-        cols = df.columns[df.columns.str.contains(r'.*/.*\(L', regex=True)]
-        for col in cols:
-            rows_to_change = np.logical_or(df[col] < 0., df[col] > 10.)
-            df.loc[rows_to_change, col]         = np.nan
-            df.loc[rows_to_change, 'err_ratio'] = np.nan
-            
-        # tri les baseline CO2 et enlève l'erreur sur la baseline
-        for col in df.columns[df.columns.str.contains('CO2base')]:
-            rows_to_change = np.logical_or(df[col] < 350, df[col] > 475)
-            df.loc[rows_to_change, col]           = np.nan
-            df.loc[rows_to_change, 'CO2/H2S(L2)'] = np.nan
-            df.loc[rows_to_change, 'err_ratio']   = np.nan
+    # filter ratios
+    cols = col_filter(df_c, r'.*/.*\(L')
+    for col in cols:
+        rows_to_change = np.logical_or(df_c[col] < 0., df_c[col] > 10.)
+        df_c.loc[rows_to_change, col]           = np.nan
+        df_c.loc[rows_to_change, 'err_ratio']   = np.nan
 
-        # tri les shifts
-        for col in df.columns[df.columns.str.contains('delay(s)')]:
-            rows_to_change = df[col] > 10
-            df.loc[rows_to_change, col] = np.nan
-            if col[-1] == ')' or int(col[-1]) % 2 == 0:
-                df.loc[rows_to_change, 'CO2/H2S(L1)'] = np.nan
-                df.loc[rows_to_change, 'CO2/H2S(L2)'] = np.nan
-            else:
-                df.loc[rows_to_change, 'CO2/H2S(L1-lpf)'] = np.nan
-                df.loc[rows_to_change, 'CO2/H2S(L2-lpf)'] = np.nan
+    # tri les baseline CO2 et enlève l'erreur sur la baseline
+    for col in col_filter(df_c, 'CO2base'):
+        rows_to_change = np.logical_or(df_c[col] < 350, df_c[col] > 475)
+        df_c.loc[rows_to_change, col]           = np.nan
+        df_c.loc[rows_to_change, 'CO2/H2S(L2)'] = np.nan
+        df_c.loc[rows_to_change, 'err_ratio']   = np.nan
 
-    return df
+    # tri les shifts
+    for col in col_filter(df_c, 'delay(s)'):
+        rows_to_change = df_c[col] > 10  # delays > 10 s
+        df_c.loc[rows_to_change, col] = np.nan
+        if col[-1] == ')' or int(col[-1]) % 2 == 0:
+            df_c.loc[rows_to_change, 'CO2/H2S(L1)']     = np.nan
+            df_c.loc[rows_to_change, 'CO2/H2S(L2)']     = np.nan
+        else:
+            df_c.loc[rows_to_change, 'CO2/H2S(L1-lpf)'] = np.nan
+            df_c.loc[rows_to_change, 'CO2/H2S(L2-lpf)'] = np.nan
+
+    return df_c
 
 
 if __name__ == '__main__':
