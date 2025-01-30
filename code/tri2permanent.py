@@ -9,9 +9,10 @@ import warnings
 warnings.simplefilter(action='ignore', category=UserWarning)
 
 from configparser import ConfigParser
+from process_mg_data.code.mg_common import proc_mg_dir
 
 config = ConfigParser()
-conffl = '/home/david/python/process_mg_data/process.cfg'
+conffl = proc_mg_dir() + 'process.cfg'
 if os.path.isfile(conffl):
     config.read(conffl)
 else:

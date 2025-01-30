@@ -74,6 +74,15 @@ ratio_minmax = {'CO2/H2S(L2)': [0, 10],
                 'H2O/H2S(L2-lpf)': [0, np.nan],
                 'H2O/H2S(L1-lpf)': [0, np.nan]}
 
+def proc_mg_dir():
+    '''Returns the directory where the process_mg_data module is located'''
+    import process_mg_data
+
+    ## module.__file__ is the path to module.py, __init__.py or submodule.py 
+    pmgd_dir = '/'.join(process_mg_data.__file__.split('/')[:-1]) + '/'
+    print(pmgd_dir)
+
+
 def base_by_system():
     '''
     Create base of filename according to the type of system being used
