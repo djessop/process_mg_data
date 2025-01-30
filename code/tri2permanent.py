@@ -11,6 +11,7 @@ warnings.simplefilter(action='ignore', category=UserWarning)
 from configparser import ConfigParser
 from process_mg_data.code.mg_common import proc_mg_dir
 
+
 config = ConfigParser()
 conffl = proc_mg_dir() + 'process.cfg'
 if os.path.isfile(conffl):
