@@ -80,7 +80,7 @@ def proc_mg_dir():
 
     ## module.__file__ is the path to module.py, __init__.py or submodule.py 
     pmgd_dir = '/'.join(process_mg_data.__file__.split('/')[:-1]) + '/'
-    print(pmgd_dir)
+    return pmgd_dir
 
 
 def base_by_system():
