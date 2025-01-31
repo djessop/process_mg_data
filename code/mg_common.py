@@ -12,6 +12,8 @@ import numpy as np
 import os
 import sys
 
+import process_mg_data
+
 
 rename_dict = {'CO2base.1': 'CO2base',
                'CO2base.2': 'CO2base',
@@ -75,17 +77,14 @@ ratio_minmax = {'CO2/H2S(L2)': [0, 10],
                 'H2O/H2S(L2-lpf)': [0, np.nan],
                 'H2O/H2S(L1-lpf)': [0, np.nan]}
 
-def proc_mg_dir():
-    '''Returns the directory where the process_mg_data module is located'''
-    import process_mg_data
 
-    ## module.__file__ is the path to module.py, __init__.py or submodule.py 
-    pmgd_dir = process_mg_data.__path__ + '/'
-    return pmgd_dir
+## directory where the process_mg_data module is located
+## module.__file__ is the path to module.py, __init__.py or submodule.py 
+pmgd_dir = process_mg_data.__path__[0] + '/'
 
-
+## Configuration file containing local directory names
 config = ConfigParser()
-conffl = proc_mg_dir() + 'process.cfg'
+conffl = pmgd_dir + 'process.cfg'
 if os.path.isfile(conffl):
     config.read(conffl)
 else:
