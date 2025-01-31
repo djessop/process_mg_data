@@ -22,12 +22,12 @@ def read_all_results():
 
 
     ## Only useful for portable results
-    return df #.replace(
-        # regex=['DUPUY', 'Ty(-|)[123]', 'CS[NCS]', 'LC(inf|up)', '^56',
-        #        'FLUX-', '^Nap$', '^NapN2', 'TASE'],
-        # value=['Dupuy', 'Ty', 'CS', 'LC', 'G56',
-        #        '', 'NAP', 'NapN', 'TAS']).sort_values(
-        #     by='Site Name').reset_index(drop=True)
+    return df.replace(
+        regex=['DUPUY', 'Ty(-|)[123]', 'CS[NCS]', 'LC(inf|up)', '^56',
+               'FLUX-', '^Nap$', '^NapN2', 'TASE'],
+        value=['Dupuy', 'Ty', 'CS', 'LC', 'G56',
+               '', 'NAP', 'NapN', 'TAS']).sort_values(
+            by='Site Name').reset_index(drop=True)
 
 
 
