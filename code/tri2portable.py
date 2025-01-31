@@ -10,26 +10,15 @@ import warnings
 # Suppress the warning arising 
 warnings.simplefilter(action='ignore', category=UserWarning)
 
-from configparser import ConfigParser
-from process_mg_data.code.mg_common import proc_mg_dir, config
-
-
-config = ConfigParser()
-conffl = proc_mg_dir() + 'process.cfg'
-if os.path.isfile(conffl):
-    config.read(conffl)
-else:
-    raise FileNotFoundError(f'Config file {conffl} not found')
-
 
 if __name__ == '__main__':
-    from process_mg_data.code.mg_common import ldir_mg_files, rename_dict, \
-        df_all, ldir_mg_files, replace_sitenames, base_by_system
+    from process_mg_data.code.mg_common import ldir_mg_files, config, \
+        df_all, replace_sitenames
 
     import sys
 
 
-    base    = config['DEFAULT']['perm']
+    base    = config['DEFAULT']['port']
     dossier = base + 'results' 
     dos_out = base + 'resultstries'
     sep     = config['DEFAULT']['sep']
