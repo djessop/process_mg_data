@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from glob import glob
+from process_mg_data.code.mg_common import config
 
 import pandas as pd
 
@@ -9,21 +10,24 @@ def read_all_results():
     '''
     Docstring
     '''
-    filenames = sorted(list(glob('20*.csv')))
-    df = pd.read_csv(filenames[0], sep=';') #, parse_dates=['Time'])
+    sep     = config['DEFAULT']['sep']
+
+    filenames = sorted(list(glob('*.csv')))
+    df = pd.read_csv(filenames[0], sep=sep) #, parse_dates=['Time'])
     temp_df = pd.DataFrame(columns=df.columns)
     df = pd.DataFrame(columns=df.columns)
-    for filename in filenames:
-        temp_df = pd.read_csv(filename, sep=';', parse_dates=['Time'])
+    for filename in filenames[1:]:
+        temp_df = pd.read_csv(filename, sep=sep, parse_dates=['Time'])
         df = pd.concat([temp_df, df])
 
 
-    return df.replace(
-        regex=['DUPUY', 'Ty(-|)[123]', 'CS[NCS]', 'LC(inf|up)', '^56',
-               'FLUX-', '^Nap$', '^NapN2', 'TASE'],
-        value=['Dupuy', 'Ty', 'CS', 'LC', 'G56',
-               '', 'NAP', 'NapN', 'TAS']).sort_values(
-            by='Site Name').reset_index(drop=True)
+    ## Only useful for portable results
+    return df #.replace(
+        # regex=['DUPUY', 'Ty(-|)[123]', 'CS[NCS]', 'LC(inf|up)', '^56',
+        #        'FLUX-', '^Nap$', '^NapN2', 'TASE'],
+        # value=['Dupuy', 'Ty', 'CS', 'LC', 'G56',
+        #        '', 'NAP', 'NapN', 'TAS']).sort_values(
+        #     by='Site Name').reset_index(drop=True)
 
 
 
