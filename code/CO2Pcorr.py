@@ -6,11 +6,9 @@ import pandas
 import numpy as np
 import os
 
-from mg_common import ldir_mg_files, base_by_system
+from process_mg_data.code.mg_common import config, ldir_mg_files
 
-
-base   = base_by_system()
-base   += 'Data/MGportable/'
+base    = config['DEFAULT']['perm']
 dossier = base + 'resultstries'
 dos_out = base + 'resultsfinaux'
 

@@ -5,6 +5,7 @@
 '''
 
 from glob import glob
+from configparser import ConfigParser
 
 import pandas as pd
 import numpy as np
@@ -81,6 +82,14 @@ def proc_mg_dir():
     ## module.__file__ is the path to module.py, __init__.py or submodule.py 
     pmgd_dir = '/'.join(process_mg_data.__file__.split('/')[:-1]) + '/'
     return pmgd_dir
+
+
+config = ConfigParser()
+conffl = proc_mg_dir() + 'process.cfg'
+if os.path.isfile(conffl):
+    config.read(conffl)
+else:
+    raise FileNotFoundError(f'Config file {conffl} not found')
 
 
 def base_by_system():
