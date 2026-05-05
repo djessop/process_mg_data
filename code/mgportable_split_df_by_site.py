@@ -25,9 +25,9 @@
     RUNNING THE SCRIPT
     ------------------
     From the command line, type 
-        $ python MGportable_split_df_by_site.py <RAW_DATA_FILE> <CONFIG_FILE>
-    where <RAW_DATA_FILE> is the absolute or relative path to the bulk raw 
-    data.
+        $ python mgportable_split_df_by_site.py <RAW_DATA_FILE> <CONFIG_FILE>
+    where <RAW_DATA_FILE> and <CONFIG_FILE> are absolute or relative paths to 
+    the bulk raw data.
 
 
     AUTHOR
@@ -42,14 +42,15 @@ def site_start_stop_times(config_file):
         '%Y-%m-%dT%H:%M:%S'
     and are then converted to datetime objects.
     '''
-    from datetime import datetime as DT
+    from datetime import datetime as dt
 
-    dtstr_format = '%Y-%m-%dT%H:%M:%S'
-    sites_dict   = {}
+    dtstr_fmt  = '%Y-%m-%dT%H:%M:%S'
+    sites_dict = {}
     with open(config_file, 'r') as f:
         for line in f:
-            site, *times = line.split()
-            sites_dict[site] = [DT.strptime(t, dtstr_format) for t in times] 
+            if line != '\n':
+                site, *times = line.strip().split()
+                sites_dict[site] = [dt.strptime(t, dtstr_fmt) for t in times] 
     return sites_dict
 
 
@@ -69,19 +70,22 @@ if __name__ == '__main__':
     # and date.  If time is required in addition to date, extend the range of 
     # the slice, i.e. ...split_fn[1][1:13] for 'YYYYMMDDHHMM'
     # or   ...split_fn[1][1:15] for 'YYYYMMDDHHMMSS'
-    split_fn = filename.split('guada')
-    filedate = split_fn[1][1:9]
-    new_dirn = split_fn[0] + filedate + '/'
+    *dirname, oldfname = filename.split('/')
+    dirname  = '/'.join(dirname) 
+    #split_fn = filename.split('guada')
+    filedate = oldfname.split('_')[1][:8]
+    new_dirn = os.path.join(dirname + './' + filedate)
     if not os.path.isdir(new_dirn):
         os.mkdir(new_dirn)
-    outfile  = new_dirn + filedate
+    #outfile  = dirname + filedate
 
     # Define a dictionary of sites with 'start' and 'stop' times for each.
     sites_dict = site_start_stop_times(confname)
-
+    
     # Do not touch anything in this loop
     for site in sites_dict.keys():
         date_range = sites_dict[site]
-        site_df = mg_df[mg_df['Time'] >
-                        date_range[0]][mg_df['Time'] <= date_range[-1]]
+        date = date_range[0].strftime('%Y%m%d')
+        site_df = mg_df.query('@date_range[0] < Time <= @date_range[1]')
+        outfile = os.path.join(new_dirn, date)
         site_df.to_csv(outfile + '_' + site + '.csv', index=False, sep=';')
