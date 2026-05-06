@@ -5,244 +5,308 @@ import numpy as np
 import os
 import os.path
 import matplotlib.pyplot as plt
-import datetime
+import sys
 
-from mg_common import ldir_mg_files
-# file direction
 
-base = '/Users/severinejessop/Desktop/GAZVOLC/Bdd/Données/Soufriere/MultiGAS/Data/'
-rover = base + 'MGportable/resultsfinaux'
-perm = base + 'MGpermanent/resultsfinaux'
+from scipy.signal import medfilt
+from matplotlib.ticker import MultipleLocator
+from matplotlib.dates import MonthLocator, DateFormatter
+from plotting_tools import plotQuakes, plotMaria
+from readWebObsDF import readTimeSeries, TFContNames, readWebformData
+from dateparser import dateparser
+from datetime import datetime as DT
+from mg_common import ldir_mg_files, df_all, base_by_system
+
+
+plt.close('all')
+plt.rcParams['legend.fontsize'] = 'small'
+plt.subplots_adjust(hspace=0.3)
+
+
+base = base_by_system()
 
 # créer la liste avec tous les chemins
-fichiers  = ldir_mg_files(rover)
-permanent = ldir_mg_files(perm)
 
 # données permanentes
-ta = pandas.read_csv(permanent[0], ';')
-taco2 = np.array(ta.loc[:, ('CO2/H2Scorr(L1-lpf)')])
-ta['Time'] = pandas.to_datetime(ta['Time'])
-TTACO2 = np.array(ta['Time'])
-g = pandas.read_csv(permanent[1], ';')
-g['Time'] = pandas.to_datetime(g['Time'])
-TG56CO2 = np.array(g['Time'])
-g56co2 = np.array(g['CO2/H2Scorr(L1-lpf)'])
-c = pandas.read_csv(permanent[2], ';')
-c['Time'] = pandas.to_datetime(c['Time'])
-csco2 = np.array(c['CO2/H2S(L1-lpf)'])
-TCSCO2 = np.array(c['Time'])
+perm = base + 'Data/MGpermanent/resultsfinaux'
+permanent = ldir_mg_files(perm)  # Attn, alphabetically sorted output
+MGPermCS  = pandas.read_csv(permanent[0], sep=';', parse_dates=[0])
+MGPermG56 = pandas.read_csv(permanent[1], sep=';', parse_dates=[0])
+MGPermTAS = pandas.read_csv(permanent[2], sep=';', parse_dates=[0])
+
+MGPermG56['SO2/H2S(L1-lpf)'][MGPermG56['SO2/H2S(L1-lpf)'] > .3] = np.nan
+
 
 # données de la nappe d'eau
+citerne = pandas.read_csv(base + '../Othersparameters/' \
+                          + 'GWL_model_soufriere_from_Citerne.csv', ',')
+citerne['Time'] = pandas.to_datetime(citerne['Time'])
+citerne = citerne[citerne['Time'] > DT(2016,5,1)]
+tnappeciterne = np.array(citerne['Time'])
+gwlciterne = np.array(citerne['GWL(m)'])
 
-na = pandas.read_csv(base + 'Othersparameters/GWL_model_soufriere.csv', ';')
-na['Time'] = pandas.to_datetime(na['Time'])
-tnappe = np.array(na['Time'])
-gwl = np.array(na['GWL(m)'])
+tarade = pandas.read_csv(base + '../Othersparameters/' \
+                         + 'GWL_model_soufriere_from_Tarade.csv', ',')
+tarade['Time'] = pandas.to_datetime(tarade['Time'])
+tnappetarade = np.array(tarade['Time'])
+gwltarade = np.array(tarade['GWL(m)'])
 
-# données portables 
 
+# données rover
+rover    = base + 'Data/MGportable/resultsfinaux'
+fichiers = ldir_mg_files(rover)
+df = pandas.DataFrame()
 
-g56 = []
-tas = []
-cs = []
-napn = []
-tg56 = []
-ttas = []
-tcs = []
-tnapn = []
 for file in fichiers:
-    df = pandas.read_csv(file, ';')
-    m = len(df['Time'])
-    for i in range(0,m):
-        if df.loc[i, ('Site Name')] =  = 'G56' or df.loc[i, ('Site Name')] =  = 'FLUX-G56':
-            g56.append(df.loc[i, ('CO2/H2Scorr(L1)')])
-            tg56.append(df.loc[i, ('Time')])
-        if df.loc[i, ('Site Name')] =  = 'TAS' or df.loc[i, ('Site Name')] =  = 'FLUX-TAS' or df.loc[i, ('Site Name')] =  = 'TASE':
-            tas.append(df.loc[i, ('CO2/H2Scorr(L1)')])
-            ttas.append(df.loc[i, ('Time')])
-        if df.loc[i, ('Site Name')] =  = 'FLUX-CS' or df.loc[i, ('Site Name')] =  = 'FLUX-CSS' or df.loc[i, ('Site Name')] =  = 'CSS' or df.loc[i, ('Site Name')] =  = 'CSC' or df.loc[i, ('Site Name')] =  = 'CSN':
-            cs.append(df.loc[i, ('CO2/H2Scorr(L1)')])
-            tcs.append(df.loc[i, ('Time')])
-        if df.loc[i, ('Site Name')] =  = 'NapN' or df.loc[i, ('Site Name')] =  = 'NapN2' or df.loc[i, ('Site Name')] =  = 'NapN1':
-            napn.append(df.loc[i, ('CO2/H2Scorr(L1)')])
-            tnapn.append(df.loc[i, ('Time')])
+    df = pandas.concat([df, pandas.read_csv(file, sep=';', parse_dates=[0])])
 
-G56 = np.array(g56)
-TAS = np.array(tas)
-CS = np.array(cs)
-NAPN = np.array(napn)
-timeg56 = np.array(tg56)
-timecs = np.array(tcs)
-timetas = np.array(ttas)
-timenapn = np.array(tnapn)
-TG56 = np.array([datetime.datetime.strptime(d, '%Y/%m/%d %H:%M:%S') for d in timeg56])
-TTAS = np.array([datetime.datetime.strptime(d,'%Y/%m/%d %H:%M:%S') for d in timetas])
-TCS = np.array([datetime.datetime.strptime(d,'%Y/%m/%d %H:%M:%S') for d in timecs])
-TNAPN = np.array([datetime.datetime.strptime(d,'%Y/%m/%d %H:%M:%S') for d in timenapn])
-
-# données tamburello
-
-dt = pandas.read_csv(base + 'MGportable/litteraturedata/tamburello.csv', ';')
-
-a = [] # G56
-b = [] # CS
-c = [] # TAS
-d = [] # NapN
-aa = [] # G56 SO2
-bb = [] # CS SO2
-cc = [] # TAS SO2
-dd = [] # NapN SO2
-ta = [] # time G56
-tb = [] # time CS
-tc = [] # time TAS
-td = [] # time NapN
-
-l = len(dt['Time'])
-for k in range(0,l):
-    if dt.loc[k, ('Site Name')] =  = 'G56' or dt.loc[k, ('Site Name')] =  = 'FLUX-G56':
-        a.append(dt.loc[k, ('CO2/H2S')])
-        aa.append(dt.loc[k, ('SO2/H2S')])
-        ta.append(dt.loc[k, ('Time')])
-    if dt.loc[k, ('Site Name')] =  = 'CSS' or dt.loc[k, ('Site Name')] =  = 'CSN':
-        b.append(dt.loc[k, ('CO2/H2S')])
-        tb.append(dt.loc[k, ('Time')])
-        bb.append(dt.loc[k, ('SO2/H2S')])
-    if dt.loc[k, ('Site Name')] =  = 'TAS':
-        c.append(dt.loc[k, ('CO2/H2S')])
-        cc.append(dt.loc[k, ('SO2/H2S')])
-        tc.append(dt.loc[k, ('Time')])
-    if dt.loc[k, ('Site Name')] =  = 'NapN':
-        d.append(dt.loc[k, ('CO2/H2S')])
-        dd.append(dt.loc[k, ('SO2/H2S')])
-        td.append(dt.loc[k, ('Time')])
+MGroverTAS  = df[df['Site Name'].str.contains('TAS')]
+MGroverG56  = df[df['Site Name'].str.contains('G56')]
+MGroverCS   = df[df['Site Name'].str.contains('CS')]
+MGroverNAPN = df[df['Site Name'].str.contains('NapN')]
+MGroverNPE1 = df[df['Site Name'].str.contains('NapE1')]
 
 
-g56tam = np.array(a)
-cstam = np.array(b)
-tastam = np.array(c)
-napntam = np.array(d)
-g56tamS = np.array(aa)
-cstamS = np.array(bb)
-tastamS = np.array(cc)
-napntamS = np.array(dd)
-tg56tam = np.array([datetime.datetime.strptime(f, '%d/%m/%Y %H:%M') for f in ta])
-tcstam = np.array([datetime.datetime.strptime(f, '%d/%m/%Y %H:%M') for f in tb])
-ttastam = np.array([datetime.datetime.strptime(f, '%d/%m/%Y %H:%M') for f in tc]) 
-tnapntam = np.array([datetime.datetime.strptime(f, '%d/%m/%Y %H:%M') for f in td])
+## données tamburello
+tamburello = pandas.read_csv(
+    base + 'Data/MGportable/litteraturedata/tamburello.csv', sep=';')
+tamburello['Time'] = pandas.to_datetime(tamburello['Time'])
+tamburelloTAS  = tamburello[tamburello['Site Name'].str.contains('TAS')]
+tamburelloG56  = tamburello[tamburello['Site Name'].str.contains('G56')]
+tamburelloCS   = tamburello[tamburello['Site Name'].str.contains('CS')]
+tamburelloNAPN = tamburello[tamburello['Site Name'].str.contains('NapN')]
+tamburelloNPE1 = tamburello[tamburello['Site Name'].str.contains('NapE1')]
 
-# données webObs (pH + hauteur TAS)
-
-do = pandas.read_csv(base + 'Othersparameters/OVSG_EAUX_2019-07-23.csv', ';')
-times = np.array([datetime.datetime.strptime(d, '%Y-%m-%d') for d in do['Date']])
-pH = np.array(do['pH'])
-h = np.array(-1*do['Niveau (m)'])
-
-## graphes
-
-# base de données complètes + nappe d'eau 
-fig, ax1  =  plt.subplots()
-ax2 = ax1.twinx()
-ax1.plot(TG56, G56, 'bo', label = "G56 L1")
-ax1.plot(tg56tam, g56tam, 'bo')
-ax1.plot(TTAS, TAS, 'ro', label = "TAS L1")
-ax1.plot(ttastam, tastam, 'ro')
-ax1.plot(TCS, CS, 'mo', label = "CS L1")
-ax1.plot(tcstam, cstam, 'mo')
-ax1.plot(TNAPN, NAPN, 'co', label = "NapN L1")
-ax1.plot(tnapntam, napntam, 'co')
-ax1.plot(TTACO2, taco2, 'r', label = "TAS permanent L1-lpf")
-ax1.plot(TG56CO2, g56co2, 'b', label = "G56 permanent L1-lpf")
-ax1.plot(TCSCO2, csco2, 'm', label = "CS permanent L1-lpf")
-ax2.plot(tnappe, gwl, 'k', label = "hauteur nappe")
-ax1.set_xlabel('Time')
-ax1.set_ylabel('CO2/H2S')
-ax2.set_ylabel('GWL (m)')
-plt.title('CO2/H2S vs Time pour la base de données complètes')
-ax1.set_ylim(0,10)
-ax1.legend(loc = 'best')
-ax2.legend(loc = 'best')
-plt.grid()
-#plt.show()
+## données webObs (pH + profondeur TAS)
+do    = pandas.read_csv(
+    base + '../Othersparameters/OVSG_EAUX_2019-07-23.csv', sep=';')
+times = np.array(
+    [DT.strptime(d, '%Y-%m-%d') for d in do['Date']])
+pH    = np.array(do['pH'])
+h     = np.array(-do['Niveau (m)'])
 
 
-# tarissan perm et rover+ tamburello et nappe eau + pH+ h lac
+## Continuous temperature data
+fname = base + '../Othersparameters/GGWCSD_.csv'
 
-fig, ax1  =  plt.subplots()
-ax2 =  ax1.twinx()
-ax1.plot(TTAS, TAS, 'r.', label = "TAS rover")
-ax1.plot(TTACO2, taco2, 'r', label = "TAS permanent")
-ax1.plot(ttastam, tastam, 'r.')
-ax1.plot(times, pH, 'g', label = "pH")
-ax2.plot(tnappe, gwl, 'k', label = "hauteur nappe")
-ax2.plot(times, h, 'b', label = "hauteur lac Tarissan")
-ax1.legend(loc = 'best')
-ax2.legend(loc = 'uppper left')
-ax1.set_xlabel('Time')
-ax1.set_ylabel('CO2/H2S + pH')
-ax2.set_ylabel('GWL (m) et Niveau (m)')
-plt.title('CO2/H2S + pH + hauteur lac Tarissan + nappe vs Time')
-ax1.set_ylim(-1,8)
-plt.grid()
-#plt.show()
+temps = readTimeSeries(fname, names=TFContNames, sep=' ')
+temps.index = temps['datetime']
+temps = temps.resample('12H').mean()
+temps[temps['CSC'] < 85] = np.nan  # Only results for T > 85°C
+
+temps[temps['CSN'] < 85] = np.nan  # Only results for T > 85°C
 
 
-## CS CO2/H2S + Température + Nappe
+## Number of VT events per day
+seismes = pandas.read_csv(base + '../Othersparameters/' \
+                          + 'seisme_cumule_par_jours_2.csv',
+                          sep=';', parse_dates=[1],
+                          names=['index', 'date', 'nbr'], skiprows=1)
+
+## All VT events
+quakes = pandas.read_csv(
+    base + '../Othersparameters/BoundingBox_5x5km_20170101_20190531_data.csv',
+    sep=';', parse_dates=[2])
+quakes = quakes[quakes['Origin_times'].notna()]  # Filter NaTs
+
+##extenso
+extenso_names = ('Date;Time;Code;Site;Operateurs;Temp. Air;Meteo;'
+                 'Dist. Moy (mm);2*Sigma (mm);Vent Moy;Remarques').split(';')
+extenso = readWebformData(base + '../Othersparameters/extenso_2.csv',
+                          names=extenso_names, sep=';')
+Sites = sorted(list(set(extenso.Site)))
 
 
-# Continuous temperature data
+### GRAPHS
 
-def dateparser(y, m, d, H = None, M = None, S = None, s = None):
-    # Base case dt and format string.  
-    dt  =  y + '-' + m + '-' + d
-    fmtStr  =  '%Y-%m-%d'
-    
-    # Build dt and fmtStr according to case
-    if H is not None:
-        dt + =  " " + H           # Add 'T' between parenthesis for iso format
-        fmtStr + =  " %H"         # fmtStr is now '%Y-%m-%d %H'
-        if M is not None:       # Only do this if H AND M are not None
-            dt + =  ':' + M
-            fmtStr + =  ":%M"     # fmtStr is now '%Y-%m-%d %H:%M'
-            if S is not None:   # Only do this if H AND M AND S are not None
-                dt + =  ':' + S
-                fmtStr + =  ":%S" # fmtStr is now '%Y-%m-%d %H:%M:%S'
-                if s is not None:
-                    dt + =  '.' + s
-                    fmtStr + =  ".%f" # fmtStr is now '%Y-%m-%d %H:%M:%S.%f'
+plot_date_range = [DT(2016,5,1), DT(2020,7,31)]
 
-    return pandas.datetime.strptime(dt, fmtStr)
+fig, ax = plt.subplots(3, 2, sharex=True, figsize=(11, 9))
+ax = ax.ravel()
 
-TFContNames  =  ('y','m','d','H','M','S','CSC','CSN','CSS','CS_57',
-               'CS_SOUP','CS_28','CS_14')
+fig.subplots_adjust(hspace=.05)
 
-fname  =  base + 'Othersparameters/GGWCSD_all.csv'
-
-def readTimeSeries(fname, names, sep = ' '):
-    return pandas.read_csv(fname, sep = sep, comment = '#', names = names,
-                           parse_dates = {'datetime' : ['y','m','d','H','M','S']},
-                           date_parser = dateparser)
-
-dt  =  readTimeSeries(fname, names = TFContNames, sep = ' ')
+MS = 2.5
 
 
-dt['CSC']
-fig, ax1 =  plt.subplots()
-ax2 = ax1.twinx()
-ax1.plot(TCS, CS, 'r.', label = "CS rover")
-ax1.plot(tcstam, cstam, 'r.')
-ax1.plot(TCSCO2, csco2, 'r', label = "CS permanent")
-ax2.plot(tnappe, gwl, 'k', label = "nappe d'eau")
-ax2.plot(dt['datetime'], dt['CSC'], 'b.', label = "temperature CSC")
-# ax2.plot(ti, tcsn, 'b.')
-# ax2.plot(ti, tcss, 'b.')
-ax1.set_xlabel('Time')
-ax1.set_ylabel('CO2/H2S')
-ax2.set_ylabel('GWL (m) et T°')
-ax1.legend(loc = 'best')
-ax2.legend(loc = 'best')
-plt.title('CO2/H2S + T° + nappe vs Time pour CS')
-plt.grid()
+## LH COLUMN
 
+## Water table level and CSC temperature
+ax02 = ax[0].twinx()
+ax02.yaxis.set_major_locator(MultipleLocator(5))
+ax02.yaxis.set_minor_locator(MultipleLocator(1))
+
+p1 = ax[0].plot_date(tnappeciterne, gwlciterne, '-', label="depth of water table")
+p2 = ax[0].plot_date(tnappetarade, gwltarade, '-', label="depth of water table")
+#p3 = ax02.plot_date(temps.index, medfilt(temps['CSC'], 51), '-',
+#                    c='C2', label='CSC')
+p4 = ax02.plot_date(temps.index, medfilt(temps['CSN'], 51), '-',
+                    c='C2', label='CSN')
+
+
+# Combine the labels from the above plots
+ps = p1 +p2 + p4
+labs = [p.get_label() for p in ps]
+#ax[0].legend(ps, labs, loc=0, framealpha=.5)
+ax[0].yaxis.set_major_locator(MultipleLocator(10))
+ax[0].yaxis.set_minor_locator(MultipleLocator(2))
+
+water_table_ylim =(79,111)
+ax[0].set_ylim(water_table_ylim)
+ax[0].invert_yaxis()
+ax[0].set_ylabel('Depth of the water table/[m]')
+ax02.set_ylabel('Temp./[°C]', color='C2')
+ax02.set_ylim((87,108))
+
+
+## Number of VT events per day
+#ax[2].plot_date(seismes['date'], seismes['nbr'], color='C5')
+#ax[2].set_ylabel('VT events/day', color='C5')
+
+## CS + G56 MG data
+p0 = ax[2].plot_date(MGroverCS['Time'], MGroverCS['CO2/H2Scorr(L1-lpf)'],
+                '.C0', label="CS")
+p1 = ax[2].plot_date(tamburelloCS['Time'], tamburelloCS['CO2/H2S'],
+                markeredgecolor='k', markeredgewidth=.5,
+                marker='s', ms=MS, c='C0', label='Tamburello et al., CS')
+p2 = ax[2].plot_date(MGPermCS['Time'], MGPermCS['CO2/H2S(L1-lpf)'],
+                '-C0', label="CS permanent L1-lpf")
+
+p3 = ax[2].plot_date(MGroverG56['Time'], MGroverG56['CO2/H2Scorr(L1-lpf)'],
+                '.C2', label="G56")
+p4 = ax[2].plot_date(tamburelloG56['Time'], tamburelloG56['CO2/H2S'],
+                markeredgecolor='k', markeredgewidth=.5,
+                marker='s', ms=MS, c='C2', label='Tamburello et al., G56')
+p5 = ax[2].plot_date(MGPermG56['Time'], MGPermG56['CO2/H2Scorr(L1-lpf)'],
+                '-C2', label="G56 permanent L1-lpf")
+
+# Combine the labels from the above plots
+ps = p0 + p3
+labs = [p.get_label() for p in ps]
+ax[2].legend(ps, labs, loc=2, ncol=2)
+ax[2].set_ylabel('CO$_2$/H$_2$S')
+echelle = ax[2].get_ylim()
+ax[2].set_xlabel('Date')
+
+
+## CS+G56 Sulfur MG data
+p0 = ax[4].plot_date(MGroverCS['Time'], MGroverCS['SO2/H2S(L1-lpf)'],
+                '.C0', label="CS")
+p1 = ax[4].plot_date(tamburelloCS['Time'], tamburelloCS['SO2/H2S'],
+                markeredgecolor='k', markeredgewidth=.5,
+                marker='s', ms=MS, c='C0', label='Tamburello et al., CS')
+p3 = ax[4].plot_date(MGPermCS['Time'], MGPermCS['SO2/H2S(L1-lpf)'],
+                '-C0', label="CS permanent L1-lpf")
+
+p4 = ax[4].plot_date(MGroverG56['Time'], MGroverG56['SO2/H2S(L1-lpf)'],
+                '.C2', label="G56 rover L1-lpf")
+p5 = ax[4].plot_date(tamburelloG56['Time'], tamburelloG56['SO2/H2S'],
+                markeredgecolor='k', markeredgewidth=.5,
+                marker='s', ms=MS, c='C2', label='Tamburello et al., G56')
+p6 = ax[4].plot_date(MGPermG56['Time'], MGPermG56['SO2/H2S(L1-lpf)'],
+                '-C2', label="G56 permanent L1-lpf")
+
+
+#ax[4].legend(loc=2, ncol=2)
+ax[4].set_ylabel('SO$_2$/H$_2$S')
+#ax[4].set_ylim((0, 0.25))
+echelle2 = ax[4].get_ylim()
+#ax[4].set_xlabel('Date')
+ax[4].set_xlim(plot_date_range)
+
+## RH COLUMN
+
+ax[1].plot_date(tnappeciterne, gwlciterne, '-', label="depth of water table")
+ax[1].plot_date(tnappetarade, gwltarade, '-', label="depth of water table")
+ax[1].set_ylabel('Depth fo the water table/[m]')
+ax[1].set_ylim(water_table_ylim)
+ax[1].invert_yaxis()
+ax[1].yaxis.set_major_locator(MultipleLocator(10))
+ax[1].yaxis.set_minor_locator(MultipleLocator(2))
+
+ax12 = ax[1].twinx()
+ax12.plot_date(seismes['date'], seismes['nbr'], color='C5')
+ax12.set_ylabel('VT events/day', color='C5')
+
+## Tarrisan level and pH
+#ax32 = ax[3].twinx()
+#p1 = ax[3].plot_date(times, h, '-', label="Depth of lac Tarissan")
+#p2 = ax32.plot_date(times, pH, '-', c='C2', label="pH")
+#ax[3].set_ylabel('Depth/[m]')
+#ax32.set_ylabel('pH/[-]', color='C2')
+
+# Combine the labels from the above plots
+#ps = p1 + p2
+#labs = [p.get_label() for p in ps]
+#ax[3].legend(ps, labs, loc=0, framealpha=.5)
+
+
+## Multigas data for TAS
+#ax2 = ax[5].twinx()
+p0 = ax[3].plot_date(MGroverTAS['Time'], MGroverTAS['CO2/H2Scorr(L1-lpf)'],
+                     '.C3', label="TAS")
+p1 = ax[3].plot_date(tamburelloTAS['Time'], tamburelloTAS['CO2/H2S'],
+                     's', ms=MS, c='C3', label='Tamburello et al., TAS',
+                     markeredgecolor='k', markeredgewidth=.5)
+
+p2 = ax[3].plot_date(MGPermTAS['Time'], MGPermTAS['CO2/H2Scorr(L1-lpf)'],
+                     '-C3', label="TAS permanent L1-lpf")
+
+p3 = ax[3].plot_date(MGroverNAPN['Time'], MGroverNAPN['CO2/H2Scorr(L1-lpf)'],
+                     '.C4', label="NapN")
+p4 = ax[3].plot_date(tamburelloNAPN['Time'], tamburelloNAPN['CO2/H2S'],
+                     's', ms=MS, c='C4', label='Tamburello et al., NAPN',
+                     markeredgecolor='k', markeredgewidth=.5)
+p5 = ax[3].plot_date(MGroverNPE1['Time'], MGroverNPE1['CO2/H2Scorr(L1-lpf)'],
+                     '.C1', label="NapE1")
+p6 = ax[3].plot_date(tamburelloNPE1['Time'], tamburelloNPE1['CO2/H2S'],
+                     's', ms=MS, c='C1', label='Tamburello et al., NPE1',
+                     markeredgecolor='k', markeredgewidth=.5)
+
+#p5 = ax2.plot_date(MGPermTAS['Time'], MGPermTAS['SO2/H2S(L1)'], 'v',
+#                   c='C2', ms=2*MS, label='TAS SO$_2$/H$_2$S', zorder=0)
+#p6 = ax2.plot_date(tamburello['Time'], tamburello['SO2/H2S'], '^',
+#                   c='C2', ms=2*MS, markeredgecolor='k', markeredgewidth=.5,
+#                   label='Tamburello et al., TAS', zorder=0)
+
+#ax2.set_ylabel('SO$_2$/H$_2$S', color='C2')
+#ax2.yaxis.set_major_locator(MultipleLocator(0.02))
+#ax2.yaxis.set_minor_locator(MultipleLocator(0.01))
+
+
+ax[3].set_ylim(echelle)
+ax[3].set_ylabel('CO$_2$/H$_2$S')
+ax[3].legend(loc=1, ncol=3)
+
+# Combine the labels from the above plots
+ps = p0 + p3 + p5
+labs = [p.get_label() for p in ps]
+ax[3].legend(ps, labs, loc=0, framealpha=.5, ncol=3)
+
+
+# Extenso
+DropSites = ['BAT0', 'BLK2', 'DUP1', 'DUP3', 'FNW1', 'F303']
+for Site in Sites:
+    if Site not in DropSites:
+        df = extenso[extenso['Site'] == Site]
+        df.sort_values('datetime', inplace=True)
+        ax[5].plot_date(
+            df['datetime'], df['Dist. Moy (mm)'] - df['Dist. Moy (mm)'].iloc[0],
+            '-o', label='%s' % Site)
+ax[5].legend(ncol=2)
+
+ax[4].xaxis.set_minor_locator(MonthLocator())
+ax[4].xaxis.set_major_formatter(DateFormatter('%b %Y'))
+
+ax[5].set_xlim(plot_date_range)
+
+## Add vertical bars for major events (quakes with M > 2, hurricanes etc.)
+for axis in ax:
+    plotMaria(axis)
+    plotQuakes(quakes['Origin_times'], quakes['Magnitude'], axis, M0=1.5)
+
+fig.autofmt_xdate()
+fig.tight_layout()
+fig.savefig(base + 'Graphiques/Figure4.png')
 
 plt.show()
-
