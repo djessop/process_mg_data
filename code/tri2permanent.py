@@ -8,8 +8,7 @@ import warnings
 # Suppress the warning arising 
 warnings.simplefilter(action='ignore', category=UserWarning)
 
-from configparser import ConfigParser
-from process_mg_data.code.mg_common import pmgd_dir, config
+from process_mg_data.code.mg_common import config
 
 
 def col_filter(df, pattern, is_regex=True):
@@ -69,7 +68,7 @@ def remove_bad_data(df):
 
 
 if __name__ == '__main__':
-    from process_mg_data.code.mg_common import ldir_mg_files, rename_dict, \
+    from process_mg_data import ldir_mg_files, rename_dict, \
         config
 
     import sys

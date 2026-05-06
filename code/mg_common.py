@@ -80,11 +80,11 @@ ratio_minmax = {'CO2/H2S(L2)': [0, 10],
 
 ## directory where the process_mg_data module is located
 ## module.__file__ is the path to module.py, __init__.py or submodule.py 
-pmgd_dir = process_mg_data.__path__[0] + '/'
+conffl = os.path.join(process_mg_data.__path__[0], 'process.cfg')
 
 ## Configuration file containing local directory names
 config = ConfigParser()
-conffl = pmgd_dir + 'process.cfg'
+
 if os.path.isfile(conffl):
     config.read(conffl)
 else:
