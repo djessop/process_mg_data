@@ -148,3 +148,11 @@ def sort_by_site_datetime(df_all):
     Return a dataframe sorted by sites and then by datetime
     '''
     return df.sort_values(by=['Site Name', 'Time'], inplace=True)
+
+
+def read_mgfile(filename, sep=';', dt_col='Time', dtfmt='%Y/%m/%d %H:%M:%S'):
+    import pandas as pd
+
+    return pd.read_csv(filename, sep=sep, parse_dates=[dt_col],
+                       date_format=dtfmt)
+    
