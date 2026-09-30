@@ -15,7 +15,7 @@ import itertools
 
 
 """
-plot_mg_data : as the name suggests, this code takes multigas data and plots it.
+plot_mg_data : as the name suggests, this core takes multigas data and plots it.
 There are two sorts of plot: 
 i)      correlation of molar ratios, notably for H2O/H2S-H2O/CO2
 ii)     time series of either the absolute concentrations or of molar ratios

@@ -8,7 +8,7 @@ import warnings
 # Suppress the warning arising 
 warnings.simplefilter(action='ignore', category=UserWarning)
 
-from process_mg_data.code.mg_common import config
+from process_mg_data.core.mg_common import config
 
 
 def col_filter(df, pattern, is_regex=True):
@@ -19,7 +19,7 @@ def remove_bad_data(df):
     '''
     Returns a dataframe where data below certain thresholds has been removed.
     '''
-    from process_mg_data.code.mg_common import ratio_minmax
+    from process_mg_data.core.mg_common import ratio_minmax
 
     df_c = df.copy()
     # for ind, row in df.iterrows():

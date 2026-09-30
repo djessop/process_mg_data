@@ -6,14 +6,17 @@
 
 from glob import glob
 from configparser import ConfigParser
+from pathlib import Path
 
 import pandas as pd
 import numpy as np
 import os
 import sys
 
-import process_mg_data
 
+# standard
+mg_fmt_conf = dict(sep=';', parse_dates=['Time'],
+                   date_format='%Y/%m/%d %H:%M:%S')
 
 rename_dict = {'CO2base.1': 'CO2base',
                'CO2base.2': 'CO2base',
@@ -78,8 +81,13 @@ ratio_minmax = {'CO2/H2S(L2)': [0, 10],
                 'H2O/H2S(L1-lpf)': [0, np.nan]}
 
 
+NA_STRINGS = ["NA", "na", "nan", "NaN", "", "NAN"]
+
+
 ## directory where the process_mg_data module is located
 ## module.__file__ is the path to module.py, __init__.py or submodule.py 
+import process_mg_data
+
 conffl = os.path.join(process_mg_data.__path__[0], 'process.cfg')
 
 ## Configuration file containing local directory names
@@ -107,16 +115,11 @@ def ldir_mg_files(directory='./', ending='.csv', names=False):
     Return a list of all multigas data files (i.e. files ending in *.csv) 
     in the current directory and all subdirectories.
     '''
-    L = []
-    for path, dirs, files in os.walk(directory):
-        for f in files:
-            if '._' not in f and f.endswith(ending) and not f.endswith('#'):
-                L.append(os.path.join(path, f))
-    L.sort()
-    if names:
-        return L, [f.split('/')[-1] for f in L]
-    else:
-        return L
+    files = sorted(Path(directory).rglob('*' + ending))
+    for f in files:
+        if '._' in f.name or f.suffix != ending:  # remove OSmac files
+            files.remove(f)
+    return files
 
 
 def df_all(directory, sep=','):
@@ -150,9 +153,19 @@ def sort_by_site_datetime(df_all):
     return df.sort_values(by=['Site Name', 'Time'], inplace=True)
 
 
-def read_mgfile(filename, sep=';', dt_col='Time', dtfmt='%Y/%m/%d %H:%M:%S'):
-    import pandas as pd
+def read_mgfile(filename, mg_fmt_conf):
+    data = pd.read_csv(filename, **mg_fmt_conf,
+                       na_values=NA_STRINGS, keep_default_na=True)
+    gps_names = ['Longitude', 'Long', 'Lon', 'longitude', 'long', 'lon',
+                 'Latitude', 'Lati', 'Lat', 'latitude', 'lati', 'lat',
+                 'Altitude', 'Alti', 'Alt', 'altitude', 'alti', 'alt']
 
-    return pd.read_csv(filename, sep=sep, parse_dates=[dt_col],
-                       date_format=dtfmt)
-    
+    for colname in data.columns:
+        if colname != "Time":
+            data[colname] = pd.to_numeric(
+                data[colname], errors='coerce')
+        # Interpolate to remove NaNs in lon/lat/alt columns
+        if colname in gps_names:
+            data[colname] = data[colname].interpolate()
+
+    return data

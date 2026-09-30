@@ -64,7 +64,7 @@ def _process_datetimes(args, data):
 if __name__ == '__main__':
     from pathlib import Path
     from datetime import datetime as dt
-    from process_mg_data.code.mg_common import read_mgfile
+    from process_mg_data.core.mg_common import read_mgfile
 
     import argparse
     import pandas as pd

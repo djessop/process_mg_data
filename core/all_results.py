@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from glob import glob
-from process_mg_data.code.mg_common import config
+from process_mg_data.core.mg_common import config
 
 import pandas as pd
 
@@ -34,7 +34,7 @@ def read_all_results():
 def drop_sites_containing(df, contains_strings):
     ## DROP ROWS FROM DATAFRAME WHOSE NAME CONTAINS 'contains_string'.
     ## For example, you want to drop all FTY 
-    ## measurements, whose site code contains 'Ty':
+    ## measurements, whose site core contains 'Ty':
     ## df = df[~df['Site Name'].str.contains('Ty')]
 
     if type(contains_strings) is list:

@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "process_mg_data"
+dynamic = ["version"]
+description = "Short description of what the package does"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { file = "LICENSE" }
+authors = [
+    { name = "David Jessop", email = "d.jessop@opgc.fr" },
+]
+dependencies = [
+    "numpy",
+    "pandas",
+    "matplotlib",
+    "seaborn"
+]
+
+[tool.setuptools.dynamic]
+version = { attr = "process_mg_data._version.__version__" }
+
+[tool.setuptools]
+packages = ["process_mg_data", "process_mg_data.core"]
+
+[tool.setuptools.package-dir]
+process_mg_data = "."
+"process_mg_data.core" = "core"
+
+[tool.setuptools.package-data]
+module_name = ["process.cfg"]

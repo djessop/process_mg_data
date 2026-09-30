@@ -6,7 +6,7 @@ import pandas
 import numpy as np
 import os
 
-from process_mg_data.code.mg_common import config, ldir_mg_files
+from process_mg_data.core.mg_common import config, ldir_mg_files
 
 base    = config['DEFAULT']['perm']
 dossier = base + 'resultstries'

@@ -12,7 +12,7 @@ warnings.simplefilter(action='ignore', category=UserWarning)
 
 
 if __name__ == '__main__':
-    from process_mg_data.code.mg_common import ldir_mg_files, config, \
+    from process_mg_data.core.mg_common import ldir_mg_files, config, \
         df_all, replace_sitenames
 
     import sys
