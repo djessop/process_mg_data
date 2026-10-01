@@ -13,6 +13,10 @@ import numpy as np
 import os
 import sys
 
+_gps_names = ['Longitude', 'Long', 'Lon', 'longitude', 'long', 'lon',
+              'Latitude', 'Lati', 'Lat', 'latitude', 'lati', 'lat',
+              'Altitude', 'Alti', 'Alt', 'altitude', 'alti', 'alt']
+
 
 # standard
 mg_fmt_conf = dict(sep=';', parse_dates=['Time'],
@@ -153,19 +157,31 @@ def sort_by_site_datetime(df_all):
     return df.sort_values(by=['Site Name', 'Time'], inplace=True)
 
 
-def read_mgfile(filename, mg_fmt_conf):
+def read_mgfile(filename, mg_fmt_conf=mg_fmt_conf):
+    from pandas.api.types import is_datetime64_any_dtype
+
     data = pd.read_csv(filename, **mg_fmt_conf,
                        na_values=NA_STRINGS, keep_default_na=True)
-    gps_names = ['Longitude', 'Long', 'Lon', 'longitude', 'long', 'lon',
-                 'Latitude', 'Lati', 'Lat', 'latitude', 'lati', 'lat',
-                 'Altitude', 'Alti', 'Alt', 'altitude', 'alti', 'alt']
 
     for colname in data.columns:
         if colname != "Time":
             data[colname] = pd.to_numeric(
                 data[colname], errors='coerce')
         # Interpolate to remove NaNs in lon/lat/alt columns
-        if colname in gps_names:
+        if colname in _gps_names:
             data[colname] = data[colname].interpolate()
+
+    ## Treat case where datetime ('Time') column is not in expected format -
+    ## use data.dtypes and pd.to_datetime
+    alternative_dt_fmts = iter(['%d/%m/%Y %H:%M:%S', '%d/%m/%Y %H:%M',
+                                '%d-%m-%Y %H:%M:%S', '%d-%m-%Y %H:%M'])
+    try:
+        dt_fmt = next(alternative_dt_fmts)
+        while not is_datetime64_any_dtype(data['Time']):
+            data['Time'] = pd.to_datetime(data['Time'], format=dt_fmt)
+            dt_fmt = next(alternative_dt_fmts)
+    except StopIteration:  # no more options to test
+        raise Warning('Time column could not be converted to datetime object '\
+                      '-- unknown format')
 
     return data
