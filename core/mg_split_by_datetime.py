@@ -61,7 +61,7 @@ def _process_datetimes(args, data):
     return args, stime, etime
 
 
-if __name__ == '__main__':
+def mg_split_by_datetime():
     from pathlib import Path
     from datetime import datetime as dt
     from process_mg_data.core.mg_common import read_mgfile
@@ -123,4 +123,9 @@ if __name__ == '__main__':
                 sub_data = data.query('@stime <= Time <= @etime')
                 sub_data.to_csv(oname, sep=';', index=False, date_format=dtfmt)
 
+    return
+
+
+if __name__ == '__main__':
+    mg_split_by_datetime()
                 

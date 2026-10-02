@@ -5,7 +5,6 @@
 '''
 
 from glob import glob
-from configparser import ConfigParser
 from pathlib import Path
 
 import pandas as pd
@@ -17,10 +16,6 @@ _gps_names = ['Longitude', 'Long', 'Lon', 'longitude', 'long', 'lon',
               'Latitude', 'Lati', 'Lat', 'latitude', 'lati', 'lat',
               'Altitude', 'Alti', 'Alt', 'altitude', 'alti', 'alt']
 
-
-# standard
-mg_fmt_conf = dict(sep=';', parse_dates=['Time'],
-                   date_format='%Y/%m/%d %H:%M:%S')
 
 rename_dict = {'CO2base.1': 'CO2base',
                'CO2base.2': 'CO2base',
@@ -88,16 +83,15 @@ ratio_minmax = {'CO2/H2S(L2)': [0, 10],
 NA_STRINGS = ["NA", "na", "nan", "NaN", "", "NAN"]
 
 
-## directory where the process_mg_data module is located
-## module.__file__ is the path to module.py, __init__.py or submodule.py 
+## Configuration file containing local directory names, and other parameters
+from configparser import RawConfigParser
+
 import process_mg_data
 
+config = RawConfigParser()
 conffl = os.path.join(process_mg_data.__path__[0], 'process.cfg')
-
-## Configuration file containing local directory names
-config = ConfigParser()
-
-if os.path.isfile(conffl):
+conffl = Path(process_mg_data.__path__[0]) / 'process.cfg'
+if conffl.is_file():
     config.read(conffl)
 else:
     raise FileNotFoundError(f'Config file {conffl} not found')
@@ -157,10 +151,14 @@ def sort_by_site_datetime(df_all):
     return df.sort_values(by=['Site Name', 'Time'], inplace=True)
 
 
-def read_mgfile(filename, mg_fmt_conf=mg_fmt_conf):
+def read_mgfile(filename, config=config):
     from pandas.api.types import is_datetime64_any_dtype
 
-    data = pd.read_csv(filename, **mg_fmt_conf,
+    sep   = config.get('DEFAULT', 'sep')
+    dtfmt = config.get('DEFAULT', 'dtfmt')
+    dtcol = [config.get('DEFAULT', 'dtcol')]
+
+    data = pd.read_csv(filename, sep=sep, date_format=dtfmt, parse_dates=dtcol,
                        na_values=NA_STRINGS, keep_default_na=True)
 
     for colname in data.columns:

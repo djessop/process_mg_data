@@ -2,7 +2,7 @@
 # coding: utf-8
 
 ''' 
-    MGportable_split_df_by_site.py
+    mg_split_by_site.py
     ------------------------------
 
     Splits a raw MG data file by site according to a user-defined configuration 
@@ -25,7 +25,7 @@
     RUNNING THE SCRIPT
     ------------------
     From the command line, type 
-        $ python mgportable_split_df_by_site.py <RAW_DATA_FILE> <CONFIG_FILE>
+        $ python mg_split_by_site.py <RAW_DATA_FILE> <CONFIG_FILE>
     where <RAW_DATA_FILE> and <CONFIG_FILE> are absolute or relative paths to 
     the bulk raw data.
 
@@ -54,17 +54,14 @@ def site_start_stop_times(config_file):
     return sites_dict
 
 
-if __name__ == '__main__':
-    import os
-    import sys
+def mg_split_by_site(filename, site, confname):
+    from process_mg_data import read_mgfile, confif
     import pandas as pd
+
     # Ensure that filename points to the right location.  This will 
     # necessarily be different for each MG outing.
-    filename = sys.argv[1]     # '../data/MGportable/guada_20191220141504.csv'
     confname = './config.txt'  # Default 
-    if len(sys.argv) == 3:
-        confname = sys.argv[2]  
-    mg_df = pd.read_csv(filename, parse_dates=[0], sep=';')
+    mg_df = read_mgfile(filename, config)
 
     # Split the filename to keep only the essential information: file location 
     # and date.  If time is required in addition to date, extend the range of 
@@ -72,12 +69,10 @@ if __name__ == '__main__':
     # or   ...split_fn[1][1:15] for 'YYYYMMDDHHMMSS'
     *dirname, oldfname = filename.split('/')
     dirname  = '/'.join(dirname) 
-    #split_fn = filename.split('guada')
     filedate = oldfname.split('_')[1][:8]
     new_dirn = os.path.join(dirname + './' + filedate)
     if not os.path.isdir(new_dirn):
         os.mkdir(new_dirn)
-    #outfile  = dirname + filedate
 
     # Define a dictionary of sites with 'start' and 'stop' times for each.
     sites_dict = site_start_stop_times(confname)
@@ -89,3 +84,8 @@ if __name__ == '__main__':
         site_df = mg_df.query('@date_range[0] < Time <= @date_range[1]')
         outfile = os.path.join(new_dirn, date)
         site_df.to_csv(outfile + '_' + site + '.csv', index=False, sep=';')
+
+    return 
+
+if __name__ == '__main__':
+    mg_split_by_site(filename, site, confname)
