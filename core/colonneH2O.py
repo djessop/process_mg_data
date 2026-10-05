@@ -6,7 +6,7 @@ import os
 import os.path
 import sys
 
-from . import ldir_mg_files, base_by_system, read_mgfile
+from . import ldir_mg_files, read_mgfile, config
 from pathlib import Path
 
 def calc_H2O(df):
@@ -20,8 +20,8 @@ def calc_H2O(df):
     return H2O
 
 if __name__ == '__main__':
-    base    = base_by_system()
-    dossier = base + 'Data/MGportable/Goodata/'
+    base    = config.get('DEFAULT', 'data')
+    dossier = Path(base) / 'MGportable/Goodata/'
     
     fichiers = ldir_mg_files(dossier)
     

@@ -1,6 +1,7 @@
 *~
 process.cfg*
-code/*~
-code/__pycache__
+core/*~
+core/correlation.py
+core/__pycache__
 Data/
 __pycache__

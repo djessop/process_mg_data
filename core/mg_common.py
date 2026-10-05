@@ -9,7 +9,6 @@ from pathlib import Path
 
 import pandas as pd
 import numpy as np
-import os
 import sys
 
 _gps_names = ['Longitude', 'Long', 'Lon', 'longitude', 'long', 'lon',
@@ -89,23 +88,11 @@ from configparser import RawConfigParser
 import process_mg_data
 
 config = RawConfigParser()
-conffl = os.path.join(process_mg_data.__path__[0], 'process.cfg')
 conffl = Path(process_mg_data.__path__[0]) / 'process.cfg'
 if conffl.is_file():
     config.read(conffl)
 else:
     raise FileNotFoundError(f'Config file {conffl} not found')
-
-
-def base_by_system():
-    '''
-    Create base of filename according to the type of system being used
-    '''
-    if sys.platform == 'linux':
-        base = '/media/david/KINGSTON/'
-    elif sys.platform == 'darwin':
-        base = '/Users/severinejessop/Desktop/GAZVOLC/Bdd/Donnees/Soufriere/'
-    return base + 'MultiGAS/'
 
 
 def ldir_mg_files(directory='./', ending='.csv', names=False):
