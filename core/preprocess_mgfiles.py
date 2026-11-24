@@ -1,5 +1,5 @@
 from pathlib import Path
-from process_mg_data import read_mgfile, config
+from process_mg_data.core import read_mgfile, config
 
 import re
 
@@ -15,7 +15,7 @@ def _update_name(filename):
     return f"{prefix}_{timestamp}-mod.csv"
 
 
-def preprocess_mgfile(filename, config):
+def preprocess_mgfile(filename, config=config):
     """
     Ensures that all numerical columns (e.g. gas concentrations, ratios, gps
     coordinates are in proper numeric format and rewrites the csv file.

@@ -95,7 +95,7 @@ def mg_split_by_datetime():
     oname = Path(args.output)
     dtfmt = args.dtfmt
     tfile = args.timesfile
-    data  = read_mgfile(fname, dtfmt=dtfmt)
+    data  = read_mgfile(fname)
     #data  = pd.read_csv(fname, date_format=dtfmt, parse_dates=['Time'])
     
     # print(f"fname: {fname}\nstart: {stime}\nend:   {etime}")
