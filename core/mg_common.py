@@ -145,7 +145,8 @@ def read_mgfile(filename, config=config):
     dtfmt = config.get('DEFAULT', 'dtfmt')
     dtcol = [config.get('DEFAULT', 'dtcol')]
 
-    data = pd.read_csv(filename, sep=sep, date_format=dtfmt, parse_dates=dtcol,
+    data = pd.read_csv(filename, sep=sep,
+                       date_format=dtfmt, parse_dates=dtcol,
                        na_values=NA_STRINGS, keep_default_na=True)
 
     for colname in data.columns:
@@ -159,7 +160,8 @@ def read_mgfile(filename, config=config):
     ## Treat case where datetime ('Time') column is not in expected format -
     ## use data.dtypes and pd.to_datetime
     alternative_dt_fmts = iter(['%d/%m/%Y %H:%M:%S', '%d/%m/%Y %H:%M',
-                                '%d-%m-%Y %H:%M:%S', '%d-%m-%Y %H:%M'])
+                                '%d-%m-%Y %H:%M:%S', '%d-%m-%Y %H:%M',
+                                '%Y/%m/%d %H:%M'])
     try:
         dt_fmt = next(alternative_dt_fmts)
         while not is_datetime64_any_dtype(data['Time']):

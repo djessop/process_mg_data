@@ -7,3 +7,15 @@ code = /\<user\>/\<path\>/process_mg_data/code/ -> code = /home/alice/Documents/
 
 TO DO:
 - example data files + use cases
+
+
+## USAGE
+
+
+### `preprocess_mgfiles`
+
+
+### `mg_split_by_site`
+
+
+### `mg_split_by_datetime`

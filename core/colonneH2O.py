@@ -1,6 +1,6 @@
 ## traitement de tous les fichiers ajout colonne H20
 
-import pandas
+import pandas as pd
 import numpy as np
 import os
 import os.path
@@ -20,21 +20,21 @@ def calc_H2O(df):
     return H2O
 
 if __name__ == '__main__':
-    base    = config.get('DEFAULT', 'data')
-    dossier = Path(base) / 'MGportable/Goodata/'
-    
+    sep      = config.get('DEFAULT', 'sep')
+    dtfmt    = config.get('DEFAULT', 'dtfmt')
+    dtcol    = config.get('DEFAULT', 'dtcol')
+    dossier  = config.get('DEFAULT', 'port') / 'Rawdata/'
     fichiers = ldir_mg_files(dossier)
     
-    for file in fichiers:
-        if Path(file).is_file():
-            df = read_mgfile(file)
+    for fname in fichiers:
+        if fname.is_fname():
+            df = read_mgfname(fname, config)
     
-            # transforme les colonnes de type object en float64
-            df['Pressure'] = pandas.to_numeric(df['Pressure'], errors='coerce')
-            df['Tair'] = pandas.to_numeric(df['Tair'], errors='coerce')
-            df['Rh'] = pandas.to_numeric(df['Rh'], errors='coerce')
-        
-            df['H20'] = calc_H20(df)
-            df = df.set_index('Time')
-            df.to_csv(file, ';', date_format='%Y/%m/%d %H:%M:%S')
+            # Force necessary columns to be in numeric form
+            df['Pressure'] = pd.to_numeric(df['Pressure'], errors='coerce')
+            df['Tair']     = pd.to_numeric(df['Tair'], errors='coerce')
+            df['Rh']       = pd.to_numeric(df['Rh'], errors='coerce')
+            df['H20']      = calc_H20(df)
+            df             = df.set_index(dtcol)
+            df.to_csv(fname, sep=sep, date_format=dtfmt)
         
