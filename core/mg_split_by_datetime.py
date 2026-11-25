@@ -33,8 +33,8 @@
 
 
 def _process_datetimes(args, data):
-    stime = args.stime
-    etime = args.etime
+    stime = args.start
+    etime = args.end
 
     if stime == '':
         stime = None
