@@ -5,3 +5,6 @@ core/correlation.py
 core/__pycache__
 Data/
 __pycache__
+process_mg_data.egg-info/
+example_data/
+output.csv
